@@ -10,12 +10,12 @@ import kotlinx.coroutines.withContext
 /**
  * Secure implementation of API key management using EncryptedSharedPreferences.
  * 
- * This class provides encrypted storage for DeepSeek API keys using AES256_GCM encryption.
+ * This class provides encrypted storage for OpenAI API keys using AES256_GCM encryption.
  * All operations are performed on the IO dispatcher for thread safety.
  * 
  * API key format requirements:
- * - Length: 32-128 characters
- * - Allowed characters: alphanumeric (A-Z, a-z, 0-9), underscores (_), and hyphens (-)
+ * - Must start with "sk-" prefix (OpenAI format)
+ * - Length: 20-200 characters
  * 
  * Security features:
  * - AES256_GCM encryption for values
@@ -59,7 +59,7 @@ class SecureApiKeyManager(private val context: Context) : IApiKeyManager {
                 if (!validateKeyFormat(apiKey)) {
                     Log.w(TAG, "API key validation failed: invalid format")
                     return@withContext Result.failure(
-                        IllegalArgumentException("API key format is invalid. Must be 32-128 characters, alphanumeric with underscores and hyphens.")
+                        IllegalArgumentException("API key format is invalid. Must start with 'sk-' and be 20-200 characters long.")
                     )
                 }
                 
@@ -101,18 +101,18 @@ class SecureApiKeyManager(private val context: Context) : IApiKeyManager {
     }
     
     /**
-     * Validates the format of an API key using regex.
+     * Validates the format of an OpenAI API key.
      * 
      * Valid format:
-     * - Length: 32-128 characters
-     * - Characters: A-Z, a-z, 0-9, underscore (_), hyphen (-)
+     * - Must start with "sk-" prefix
+     * - Length: 20-200 characters
      * 
      * @param apiKey The API key to validate
      * @return true if the key format is valid
      */
     override fun validateKeyFormat(apiKey: String): Boolean {
-        return apiKey.length in 32..128 && 
-               apiKey.matches(API_KEY_REGEX)
+        return apiKey.startsWith("sk-") && 
+               apiKey.length in API_KEY_MIN_LENGTH..API_KEY_MAX_LENGTH
     }
     
     /**
@@ -158,11 +158,7 @@ class SecureApiKeyManager(private val context: Context) : IApiKeyManager {
         private const val PREFS_NAME = "deepseek_api_prefs"
         private const val KEY_API_KEY = "api_key"
         private const val KEY_SAVED_AT = "saved_at"
-        
-        /**
-         * Regex pattern for valid API key format.
-         * Matches: 32-128 characters of alphanumeric, underscore, or hyphen
-         */
-        private val API_KEY_REGEX = Regex("^[A-Za-z0-9_-]+$")
+        private const val API_KEY_MIN_LENGTH = 20
+        private const val API_KEY_MAX_LENGTH = 200
     }
 }
