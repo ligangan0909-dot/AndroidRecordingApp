@@ -18,7 +18,7 @@
     <string name="delete_confirm">确定删除此录音？</string>
     <string name="cancel">取消</string>
     <string name="confirm">确定</string>
-    <string name="transcription_placeholder">转写功能即将推出\n\n将集成DeepSeek API实现语音转文字功能</string>
+    <string name="transcription_placeholder">转写功能即将推出\n\n将集成OpenAI Whisper API实现语音转文字功能</string>
     
     <!-- Transcription Activity -->
     <string name="uploading">上传中: %d%%</string>
@@ -33,7 +33,7 @@
     
     <!-- Settings Activity -->
     <string name="api_key_settings">API密钥设置</string>
-    <string name="api_key_description">请输入您的DeepSeek API密钥以启用转写功能</string>
+    <string name="api_key_description">请输入您的OpenAI API密钥以启用转写功能</string>
     <string name="api_key">API密钥</string>
     <string name="save">保存</string>
     <string name="clear">清除</string>
@@ -43,5 +43,5 @@
     <string name="api_key_saved">API密钥已保存</string>
     <string name="api_key_save_failed">保存失败: %s</string>
     <string name="api_key_cleared">API密钥已清除</string>
-    <string name="api_key_help">API密钥长度应为32-128个字符，仅包含字母、数字、下划线和连字符</string>
+    <string name="api_key_help">API密钥应以 sk- 开头，长度为20-200个字符</string>
 </resources>
