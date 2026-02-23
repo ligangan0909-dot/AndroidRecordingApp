@@ -4,36 +4,36 @@ package com.example.recordingapp.data.model
  * Sealed class hierarchy representing different types of transcription errors.
  * Each error type includes a message and provides a user-friendly message via toUserMessage().
  */
-sealed class TranscriptionError {
+sealed class TranscriptionError(message: String) : Exception(message) {
     /**
      * Network connectivity error.
      */
-    data class NetworkError(val message: String) : TranscriptionError()
+    data class NetworkError(override val message: String) : TranscriptionError(message)
     
     /**
      * API error with HTTP status code.
      */
-    data class ApiError(val code: Int, val message: String) : TranscriptionError()
+    data class ApiError(val code: Int, override val message: String) : TranscriptionError(message)
     
     /**
      * File-related error (not found, invalid format, etc.).
      */
-    data class FileError(val message: String) : TranscriptionError()
+    data class FileError(override val message: String) : TranscriptionError(message)
     
     /**
      * Authentication/authorization error.
      */
-    data class AuthError(val message: String) : TranscriptionError()
+    data class AuthError(override val message: String) : TranscriptionError(message)
     
     /**
      * Request timeout error.
      */
-    data class TimeoutError(val message: String) : TranscriptionError()
+    data class TimeoutError(override val message: String) : TranscriptionError(message)
     
     /**
      * Validation error (invalid input, format, etc.).
      */
-    data class ValidationError(val message: String) : TranscriptionError()
+    data class ValidationError(override val message: String) : TranscriptionError(message)
     
     /**
      * Converts the error to a user-friendly message in Chinese.
