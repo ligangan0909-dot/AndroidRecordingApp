@@ -1,0 +1,14 @@
+# local.properties 模板文件
+# 
+# 这个文件用于配置本地开发环境
+# 复制此文件为 local.properties 并填入实际路径
+# 注意：local.properties 不应提交到版本控制系统
+
+# Android SDK 路径
+# Windows示例: sdk.dir=C\:\\Users\\YourName\\AppData\\Local\\Android\\Sdk
+# Mac示例: sdk.dir=/Users/YourName/Library/Android/sdk
+# Linux示例: sdk.dir=/home/YourName/Android/Sdk
+sdk.dir=YOUR_SDK_PATH_HERE
+
+# 可选：NDK路径（如果需要）
+# ndk.dir=YOUR_NDK_PATH_HERE
