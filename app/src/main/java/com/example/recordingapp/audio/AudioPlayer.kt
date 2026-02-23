@@ -3,22 +3,15 @@ package com.example.recordingapp.audio
 import android.media.MediaPlayer
 import java.io.File
 
-/**
- * 音频播放器
- * 负责播放录音文件
- */
 class AudioPlayer {
     private var mediaPlayer: MediaPlayer? = null
-    private var isPlaying = false
+    private var isPlayingState = false
     
     var onPlaybackComplete: (() -> Unit)? = null
     var onPlaybackProgress: ((Int, Int) -> Unit)? = null
 
-    /**
-     * 播放音频文件
-     */
     fun play(file: File) {
-        if (isPlaying) {
+        if (isPlayingState) {
             stop()
         }
 
@@ -26,33 +19,24 @@ class AudioPlayer {
             setDataSource(file.absolutePath)
             prepare()
             setOnCompletionListener {
-                isPlaying = false
+                isPlayingState = false
                 onPlaybackComplete?.invoke()
             }
             start()
         }
-        isPlaying = true
+        isPlayingState = true
     }
 
-    /**
-     * 暂停播放
-     */
     fun pause() {
         mediaPlayer?.pause()
-        isPlaying = false
+        isPlayingState = false
     }
 
-    /**
-     * 继续播放
-     */
     fun resume() {
         mediaPlayer?.start()
-        isPlaying = true
+        isPlayingState = true
     }
 
-    /**
-     * 停止播放
-     */
     fun stop() {
         mediaPlayer?.apply {
             if (isPlaying) {
@@ -61,33 +45,21 @@ class AudioPlayer {
             release()
         }
         mediaPlayer = null
-        isPlaying = false
+        isPlayingState = false
     }
 
-    /**
-     * 获取当前播放位置（毫秒）
-     */
     fun getCurrentPosition(): Int {
         return mediaPlayer?.currentPosition ?: 0
     }
 
-    /**
-     * 获取音频总时长（毫秒）
-     */
     fun getDuration(): Int {
         return mediaPlayer?.duration ?: 0
     }
 
-    /**
-     * 是否正在播放
-     */
     fun isPlaying(): Boolean {
-        return isPlaying
+        return isPlayingState
     }
 
-    /**
-     * 释放资源
-     */
     fun release() {
         stop()
     }
