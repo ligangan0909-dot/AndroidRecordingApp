@@ -121,11 +121,12 @@ class RecordingListActivity : AppCompatActivity() {
     }
 
     private fun showTranscriptionPlaceholder(recording: Recording) {
-        AlertDialog.Builder(this)
-            .setTitle("转写功能")
-            .setMessage(R.string.transcription_placeholder)
-            .setPositiveButton(R.string.confirm, null)
-            .show()
+        // Launch TranscriptionActivity with recording data
+        val intent = android.content.Intent(this, com.example.recordingapp.ui.transcription.TranscriptionActivity::class.java).apply {
+            putExtra(com.example.recordingapp.ui.transcription.TranscriptionActivity.EXTRA_RECORDING_ID, recording.name)
+            putExtra(com.example.recordingapp.ui.transcription.TranscriptionActivity.EXTRA_AUDIO_FILE_PATH, recording.file.absolutePath)
+        }
+        startActivity(intent)
     }
 
     override fun onDestroy() {

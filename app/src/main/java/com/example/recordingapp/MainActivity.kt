@@ -34,6 +34,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnViewRecordings.setOnClickListener {
             startActivity(Intent(this, RecordingListActivity::class.java))
         }
+
+        binding.btnSettings.setOnClickListener {
+            startActivity(Intent(this, com.example.recordingapp.ui.settings.SettingsActivity::class.java))
+        }
     }
 
     override fun onRequestPermissionsResult(
