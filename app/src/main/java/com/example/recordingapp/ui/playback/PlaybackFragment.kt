@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.example.recordingapp.R
 import com.example.recordingapp.RecordingApp
 import com.example.recordingapp.audio.AudioPlayer
 import com.example.recordingapp.data.model.TranscriptionState
@@ -25,245 +24,112 @@ class PlaybackFragment : Fragment() {
     private val binding get() = _binding!!
     
     private lateinit var audioPlayer: AudioPlayer
-    private val handler = Handler(Looper.getMainLooper())
-    private var isPlaying = false
-    private var showingTranscription = false
-    
-    private val viewModel: PlaybackViewModel by lazy {
-        val app = requireActivity().application as RecordingApp
-        ViewModelProvider(this, PlaybackViewModelFactory(app.transcriptionService))[PlaybackViewModel::class.java]
-    }
-    
-    private val updateSeekBarRunnable = object : Runnable {
-        override fun run() {
-            if (isPlaying) {
-                updateSeekBar()
-                handler.postDelayed(this, 100)
-            }
-        }
-    }
+    private vapackage com.example.recordingapp.ui.playback
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentPlaybackBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+import android.os.Bundle
+import android.ose 
+import android.os.Bundle
+import a   
+    privimport android.os.Handlbaimport android.os.Looper  import android.view.Laytiimport android.view.View
+import ap
+impor   ViewModelProviderimport android.widget.SeekBaorimport android.widget.Toast
+[Pimport androidx.fragass.javaimport androidx.lifecycle.ViewModelPeeimport androidx.lifecycle.lifecycleScope
+i oimport androidx.navigation.fragment.finlaimport com.example.recordingapp.RecordingApp
+import   import com.example.recordingapp.audio.Audio  import com.example.recordingapp.data.model.Tranw(
+import com.example.recordingapp.databinding.FragmentPlaybackupimport kotlinx.coroutines.launch
+import java.io.File
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        
-        audioPlayer = AudioPlayer()
-        setupToolbar()
-        setupPlaybackControls()
-        setupActionButtons()
-        loadRecording()
-        observeTranscriptionState()
-        loadExistingTranscription()
-    }
+class Playbainimport jmentPlaybackBinding.infla
+class PlaybackFraine    private var _binding: Fragmenroot
+    private val binding get() = _binding!!
     
-    private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            findNavController().navigateUp()
-        }
-    }
-    
-    private fun setupPlaybackControls() {
-        binding.playPauseButton.setOnClickListener {
-            togglePlayPause()
-        }
-        
-        binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    audioPlayer.mediaPlayer?.seekTo(progress)
-                    updateTimeDisplay()
-                }
-            }
-            
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-        
-        audioPlayer.onPlaybackComplete = {
-            isPlaying = false
-            binding.playPauseButton.setImageResource(android.R.drawable.ic_media_play)
-            handler.removeCallbacks(updateSeekBarRunnable)
-        }
-    }
-    
-    private fun setupActionButtons() {
-        binding.transcribeButton.setOnClickListener {
-            val recordingId = arguments?.getLong("recordingId", 0L).toString()
-            val filePath = arguments?.getString("filePath") ?: return@setOnClickListener
-            val file = File(filePath)
-            
-            if (!file.exists()) {
-                Toast.makeText(requireContext(), "文件不存在", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            
-            viewModel.startTranscription(recordingId, filePath, file)
-        }
-        
-        binding.toggleViewButton.setOnClickListener {
-            toggleView()
-        }
-    }
-    
-    private fun loadRecording() {
-        val filePath = arguments?.getString("filePath") ?: return
-        val file = File(filePath)
-        binding.fileName.text = file.nameWithoutExtension
-    }
-    
-    private fun togglePlayPause() {
-        if (isPlaying) {
-            pausePlayback()
-        } else {
-            startPlayback()
-        }
-    }
-    
-    private fun startPlayback() {
-        val filePath = arguments?.getString("filePath") ?: return
-        val file = File(filePath)
-        
-        if (!file.exists()) {
-            Toast.makeText(requireContext(), "文件不存在", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        if (audioPlayer.mediaPlayer == null) {
-            audioPlayer.play(file)
-            binding.seekBar.max = audioPlayer.getDuration()
-            updateTimeDisplay()
-        } else {
-            audioPlayer.resume()
-        }
-        
-        isPlaying = true
-        binding.playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
-        handler.post(updateSeekBarRunnable)
-    }
-    
-    private fun pausePlayback() {
-        audioPlayer.pause()
-        isPlaying = false
-        binding.playPauseButton.setImageResource(android.R.drawable.ic_media_play)
-        handler.removeCallbacks(updateSeekBarRunnable)
-    }
-    
-    private fun updateSeekBar() {
-        val currentPosition = audioPlayer.getCurrentPosition()
-        binding.seekBar.progress = currentPosition
-        updateTimeDisplay()
-    }
-    
-    private fun updateTimeDisplay() {
-        val current = audioPlayer.getCurrentPosition()
-        val total = audioPlayer.getDuration()
-        
-        binding.currentTime.text = formatTime(current)
-        binding.totalTime.text = formatTime(total)
-    }
-    
-    private fun formatTime(milliseconds: Int): String {
-        val seconds = milliseconds / 1000
-        val minutes = seconds / 60
-        val remainingSeconds = seconds % 60
-        return String.format("%02d:%02d", minutes, remainingSeconds)
-    }
-    
-    private fun toggleView() {
-        showingTranscription = !showingTranscription
-        
-        if (showingTranscription) {
-            binding.waveformView.visibility = View.GONE
-            binding.transcriptionScroll.visibility = View.VISIBLE
-            binding.toggleViewButton.text = "查看波形"
-        } else {
-            binding.waveformView.visibility = View.VISIBLE
-            binding.transcriptionScroll.visibility = View.GONE
-            binding.toggleViewButton.text = "查看转写"
-        }
-    }
-    
-    private fun observeTranscriptionState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.transcriptionState.collect { state ->
-                when (state) {
-                    is TranscriptionState.Idle -> {
-                        binding.transcriptionProgress.visibility = View.GONE
-                        binding.transcriptionStatus.visibility = View.GONE
-                        binding.toggleViewButton.visibility = View.GONE
-                    }
-                    
-                    is TranscriptionState.Uploading -> {
-                        binding.transcriptionProgress.visibility = View.VISIBLE
-                        binding.transcriptionStatus.visibility = View.VISIBLE
-                        binding.transcriptionStatus.text = "正在上传..."
-                        binding.transcriptionScroll.visibility = View.VISIBLE
-                        binding.waveformView.visibility = View.GONE
-                    }
-                    
-                    is TranscriptionState.Processing -> {
-                        binding.transcriptionProgress.visibility = View.VISIBLE
-                        binding.transcriptionStatus.visibility = View.VISIBLE
-                        binding.transcriptionStatus.text = "正在转写..."
-                    }
-                    
-                    is TranscriptionState.Success -> {
-                        binding.transcriptionProgress.visibility = View.GONE
-                        binding.transcriptionStatus.visibility = View.GONE
-                        binding.transcriptionText.text = state.result.fullText
-                        binding.toggleViewButton.visibility = View.VISIBLE
-                        
-                        // Show transcription view
-                        binding.transcriptionScroll.visibility = View.VISIBLE
-                        binding.waveformView.visibility = View.GONE
-                        showingTranscription = true
-                        binding.toggleViewButton.text = "查看波形"
-                    }
-                    
-                    is TranscriptionState.Error -> {
-                        binding.transcriptionProgress.visibility = View.GONE
-                        binding.transcriptionStatus.visibility = View.GONE
-                        
-                        val errorMessage = when {
-                            state.error.message?.contains("File") == true -> "文件错误: ${state.error.message}"
-                            state.error.message?.contains("Network") == true -> "网络错误，请检查网络连接"
-                            state.error.message?.contains("API") == true -> "API错误，请检查设置"
-                            else -> "转写失败: ${state.error.message ?: "未知错误"}"
-                        }
-                        Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
-                        
-                        // Switch back to waveform view
-                        binding.waveformView.visibility = View.VISIBLE
-                        binding.transcriptionScroll.visibility = View.GONE
-                        showingTranscription = false
-                    }
-                    
-                    is TranscriptionState.Cancelled -> {
-                        binding.transcriptionProgress.visibility = View.GONE
-                        binding.transcriptionStatus.visibility = View.GONE
-                        Toast.makeText(requireContext(), "转写已取消", Toast.LENGTH_SHORT).show()
-                        
-                        // Switch back to waveform view
-                        binding.waveformView.visibility = View.VISIBLE
-                        binding.transcriptionScroll.visibility = View.GONE
-                        showingTranscription = false
-                    }
-                }
-            }
-        }
-        
-        // Observe hasTranscription to show/hide toggle button
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.hasTranscription.collect { hasTranscription ->
-                if (hasTranscription) {
+    privns    
+    private lateinit var audioPlayerew   at    private vapackage com.example.recordingapp.udi
+import android.os.Bundle
+import android.ose 
+import   setupimport aControls()
+      import android.os.nsimport a   
+    privimpg(    privimobimport ap
+impor   ViewModelProviderimport android.widget.SeekBaorimport android.widget.Toast
+pToolbar() {
+        bindi[Pimport androidx.fragass.javaimport androidx.lifecycle.ViewModelPeeimport androieUi oimport androidx.navigation.fragment.finlaimport com.example.recordingapp.RecordingApp
+import   import lickimport   import com.example.recordingapp.audio.Audio  import com.example.recordingapp.dOnimport com.example.recordingapp.databinding.FragmentPlaybackupimport kotlinx.coroutines.launch
+imporChanimport java.io.File
+
+class Playbainimport jmentPlaybackBinding.infla
+class PlaybackFraine      
+class Playbainimpdioclass PlaybackFraine    private var _binding:       private val binding get() = _binding!!   }
+               
+    privns    
+    private lateinit on   rt    private h(simport android.os.Bundle
+import android.ose 
+import   setupimport aControls()
+      import a  import android.os     audimport   setupimpokC      e = {
+            isPlaying    privimpg(    privimobimport ap
+iseimpor   ViewModelProviderimport a.dpToolbar() {
+        bindi[Pimport androidx.fragass.javaimport androidx.lifecycle
+         bin  import   import lickimport   import com.example.recordingapp.audio.Audio  import com.example.recordingapp.dOnimport com.example.recordingapp.databinding.FragmentPlaybackupimport kotli  imporChanimport java.io.File
+
+class Playbainimport jmentPlaybackBinding.infla
+class PlaybackFraine      
+class Playbainimpdioclass PlaybackFraine    private var _binding:       private val binding get()ui
+class Playbainimport jment??"class PlaybackFraine      
+class Playbainimpdietclass PlaybaikListener
+                   
+    privns    
+    private lateinit on   rt    private h(simport android.os.Bundle
+import android      privns    og    private l.simport android.ose 
+import   setupimport aControls()
+      import   imporvate fun loadRe      import a  import androidth             isPlaying    privimpg(    privimobimport ap
+iseimpor   Vifileiseimpor   ViewModelProviderimport a.dpToolbar() {
+   Ex        bindi[Pimport androidx.fragass.javaimporte(         bin  import   import lickimport   isePlayback()
+        } el
+class Playbainimport jmentPlaybackBinding.infla
+class PlaybackFraine      
+class Playbainimpdioclass PlaybackFraine    private var _binding:       private val binding get()ui
+class Playbainimport jment??"class PlaybackFraine 
+  class PlaybackFraine      
+class Playbainimpdi??lass PlaybainimpdioclassH_class Playbainimport jment??"class PlaybackFraine      
+class PlaybainimpdietclaaPlayer == null) {
+ class Playbainimpdietclass PlaybaikListener
+          se                   
+yer.getDuration()
+          privns    
+   sp    pr        }import android      privns    og    private l.simport android.ose   import   setupimport aControls()
+      import   imporvate fun loa(a      import   imporvate fun use)iseimpor   Vifileiseimpor   ViewModelProviderimport a.dpToolbar() {
+   Ex        bindi[Pimport androidx.fragass.javaimport     Ex        bindi[Pimport androidx.fragass.javaimporte(         bce        } el
+class Playbainimport jmentPlaybackBinding.infla
+class PlaybackFraine      
+class Playbainimpdioclae class Playbeeclass PlaybackFraine      
+class Playbainimpdiayclass PurrentPosition()
+   class Playbainimport jment??"class PlaybackFraine 
+  class PlaybackFraine      
+class Playbainimpd f  class PlaybackFraine      
+class Playbainimpdaudiclass Playbainimpdi??lass )
+class PlaybainimpdietclaaPlayer == null) {
+ class Playbainimpdietclass PlaybaikListener
+          se(cur class Playbainimpdietclass PlaybaikListerm          se                   
+yer.getDurarmyer.getDuration()
+          prin          privnsse   sp    pr        s       import   imporvate fun loa(a      import   imporvate fun use)iseimpor   Vifileiseimpor   ViewModelProviderimport d:   Ex        bindi[Pimport androidx.fragass.javaimport     Ex        bindi[Pimport androidx.fragass.javaimporte(         bce        }  class Playbainimport jmentPlaybackBinding.infla
+class PlaybackFraine      
+class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraine      
+class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPosition()
+   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine      
+class Playbainimpd f  cdiclass Playbainimpd f  class"?lass Playbainimpdaudiclass Playbainimpdi?ate funclass PlaybainimpdietclaaPlayer == null) {
+ classcl class Playbainimpdietclass PlaybaikListe            se(cur class Playbainimpdietclasse yer.getDurarmyer.getDuration()
+          prin          privnsse   sp    pr        s                  pri      binding.tranclass PlaybackFraine      
+class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraine      
+class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPosition()
+   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine      
+class Playbainimpd f  cdiclass Playbainimpd f  classViclass Playbainimpdioclae   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPositin   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine    ticlass Playbainimpd f  cdiclass Playbainimpd f  class"?lass Playbainimpdaudiclass Playbainim V classcl class Playbainimpdietclass PlaybaikListe            se(cur class Playbainimpdietclasse yer.getDurarmyer.getDuration()
+          prin   an          prin          privnsse   sp    pr        s                  pri      binding.tranclass PlaybackFr= View.VISIBLE
+     class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraine      
+class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPositns   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine    .vclass Playbainimpd f  cdiclass Playbainimpd f  classViclass Playbainimpdioclae   class Playbfu          prin   an          prin          privnsse   sp    pr        s                  pri      binding.tranclass PlaybackFr= View.VISIBLE
+     class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraine      
+class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPositns   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine    .vclass Playbainimpd f  cdiclass Pl          class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraine      
+class Playbainimptoggclass   class Playbainim bclass Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbaini       class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraine      
+class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPositns   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine    .vclass Playbainimpd f  cdiclass Pl          class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraate.error.message ?class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainionclass Playbainimptoggclass   class Playbainim bclass Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbaini       class Playbainimpdioclae class Playbeeclass PlaybackFraine  viclass PlaybackFraine      
+class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass Pu  class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPositns   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine    .vclass Playbainimpd f  ONclass Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass Pu  class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPositns   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine    .vclass Playbainimpd f  ONclass Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass Pu  class Playbainimptoggclass   class Playbainimptoggclass Playbainimpdioclae ??class Playbainimpdiayclass PurrentPositns   class Playbainiil   class Playbainimport jment??"class Playbsc  class PlaybackFraine    .vclass Playbainimp{
                     binding.toggleViewButton.visibility = View.VISIBLE
                 }
             }
