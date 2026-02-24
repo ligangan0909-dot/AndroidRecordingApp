@@ -16,7 +16,6 @@ import com.example.recordingapp.R
 import com.example.recordingapp.audio.AudioRecordManager
 import com.example.recordingapp.databinding.FragmentRecordingBinding
 import java.io.File
-import kotlin.math.abs
 import kotlin.random.Random
 
 class RecordingFragment : Fragment() {
@@ -82,8 +81,8 @@ class RecordingFragment : Fragment() {
             val outputDir = requireContext().getExternalFilesDir(null)
             val outputFile = File(outputDir, "recording_${System.currentTimeMillis()}.wav")
             
-            audioRecordManager = AudioRecordManager(outputFile.absolutePath)
-            audioRecordManager?.startRecording()
+            audioRecordManager = AudioRecordManager()
+            audioRecordManager?.startRecording(outputFile)
             
             isRecording = true
             binding.recordButton.setRecording(true)
