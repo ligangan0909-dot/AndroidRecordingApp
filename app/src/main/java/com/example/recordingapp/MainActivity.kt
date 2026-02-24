@@ -1,66 +1,32 @@
 package com.example.recordingapp
 
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.recordingapp.databinding.ActivityMainBinding
-import com.example.recordingapp.utils.PermissionHelper
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
+import com.example.recordingapp.databinding.ActivityMainNewBinding
 
 /**
- * 主界面Activity
- * 提供开始录音和查看录音列表的入口
+ * Main Activity - Single Activity Architecture
+ * Hosts all fragments with bottom navigation for iFlytek-style UI
  */
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityMainNewBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityMainNewBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupListeners()
+        setupNavigation()
     }
 
-    private fun setupListeners() {
-        binding.btnStartRecording.setOnClickListener {
-            if (PermissionHelper.hasRecordAudioPermission(this)) {
-                startRecordingActivity()
-            } else {
-                PermissionHelper.requestRecordAudioPermission(this)
-            }
-        }
-
-        binding.btnViewRecordings.setOnClickListener {
-            startActivity(Intent(this, RecordingListActivity::class.java))
-        }
-
-        binding.btnSettings.setOnClickListener {
-            startActivity(Intent(this, com.example.recordingapp.ui.settings.SettingsActivity::class.java))
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    private fun setupNavigation() {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
         
-        if (requestCode == PermissionHelper.RECORD_AUDIO_PERMISSION_CODE) {
-            if (PermissionHelper.hasRecordAudioPermission(this)) {
-                startRecordingActivity()
-            } else {
-                Toast.makeText(
-                    this,
-                    R.string.permission_denied,
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-    }
-
-    private fun startRecordingActivity() {
-        startActivity(Intent(this, RecordingActivity::class.java))
+        // Setup bottom navigation with nav controller
+        binding.bottomNavigation.setupWithNavController(navController)
     }
 }

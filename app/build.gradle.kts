@@ -68,6 +68,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     
+    // Navigation Component
+    val navVersion = "2.7.1"
+    implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
+    implementation("androidx.navigation:navigation-ui-ktx:$navVersion")
+    
     // Jetpack Compose
     val composeBom = platform("androidx.compose:compose-bom:2023.08.00")
     implementation(composeBom)

@@ -44,4 +44,9 @@
     <string name="api_key_save_failed">保存失败: %s</string>
     <string name="api_key_cleared">API密钥已清除</string>
     <string name="api_key_help">API密钥应以 sk- 开头，长度为20-200个字符</string>
+    
+    <!-- Bottom Navigation -->
+    <string name="nav_recording">录音</string>
+    <string name="nav_files">文件</string>
+    <string name="nav_profile">我的</string>
 </resources>
