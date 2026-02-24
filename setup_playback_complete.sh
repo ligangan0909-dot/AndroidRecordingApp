@@ -1,3 +1,163 @@
+#!/bin/bash
+
+echo "🚀 开始设置播放功能..."
+
+# 创建备份目录
+mkdir -p backups
+echo "📦 创建备份..."
+
+# 备份所有要修改的文件
+cp app/src/main/java/com/example/recordingapp/audio/AudioPlayer.kt backups/ 2>/dev/null
+cp app/src/main/res/navigation/nav_graph.xml backups/ 2>/dev/null
+cp app/src/main/java/com/example/recordingapp/ui/files/RecordingFile.kt backups/ 2>/dev/null
+cp app/src/main/java/com/example/recordingapp/ui/files/FilesFragment.kt backups/ 2>/dev/null
+cp app/src/main/java/com/example/recordingapp/ui/files/RecordingFileAdapter.kt backups/ 2>/dev/null
+
+echo "✅ 备份完成"
+
+# 1. 更新 AudioPlayer.kt
+echo "📝 更新 AudioPlayer.kt..."
+cat > app/src/main/java/com/example/recordingapp/audio/AudioPlayer.kt << 'KOTLIN_END'
+package com.example.recordingapp.audio
+
+import android.media.MediaPlayer
+import java.io.File
+
+class AudioPlayer {
+    var mediaPlayer: MediaPlayer? = null
+        private set
+    private var isPlayingState = false
+    
+    var onPlaybackComplete: (() -> Unit)? = null
+    var onPlaybackProgress: ((Int, Int) -> Unit)? = null
+
+    fun play(file: File) {
+        if (isPlayingState) {
+            stop()
+        }
+
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(file.absolutePath)
+            prepare()
+            setOnCompletionListener {
+                isPlayingState = false
+                onPlaybackComplete?.invoke()
+            }
+            start()
+        }
+        isPlayingState = true
+    }
+
+    fun pause() {
+        mediaPlayer?.pause()
+        isPlayingState = false
+    }
+
+    fun resume() {
+        mediaPlayer?.start()
+        isPlayingState = true
+    }
+
+    fun stop() {
+        mediaPlayer?.apply {
+            if (isPlaying) {
+                stop()
+            }
+            release()
+        }
+        mediaPlayer = null
+        isPlayingState = false
+    }
+
+    fun getCurrentPosition(): Int {
+        return mediaPlayer?.currentPosition ?: 0
+    }
+
+    fun getDuration(): Int {
+        return mediaPlayer?.duration ?: 0
+    }
+
+    fun isPlaying(): Boolean {
+        return isPlayingState
+    }
+
+    fun release() {
+        stop()
+    }
+}
+KOTLIN_END
+
+# 2. 更新 nav_graph.xml
+echo "📝 更新 nav_graph.xml..."
+cat > app/src/main/res/navigation/nav_graph.xml << 'XML_END'
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_recording">
+
+    <fragment
+        android:id="@+id/nav_recording"
+        android:name="com.example.recordingapp.ui.recording.RecordingFragment"
+        android:label="@string/nav_recording" />
+
+    <fragment
+        android:id="@+id/nav_files"
+        android:name="com.example.recordingapp.ui.files.FilesFragment"
+        android:label="@string/nav_files">
+        <action
+            android:id="@+id/action_nav_files_to_nav_playback"
+            app:destination="@id/nav_playback" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.recordingapp.ui.profile.ProfileFragment"
+        android:label="@string/nav_profile" />
+
+    <fragment
+        android:id="@+id/nav_playback"
+        android:name="com.example.recordingapp.ui.playback.PlaybackFragment"
+        android:label="播放">
+        <argument
+            android:name="recordingId"
+            android:argType="long"
+            android:defaultValue="0L" />
+        <argument
+            android:name="filePath"
+            android:argType="string" />
+    </fragment>
+</navigation>
+XML_END
+
+# 3. 更新 RecordingFile.kt
+echo "📝 更新 RecordingFile.kt..."
+cat > app/src/main/java/com/example/recordingapp/ui/files/RecordingFile.kt << 'KOTLIN_END'
+package com.example.recordingapp.ui.files
+
+import java.io.File
+
+data class RecordingFile(
+    val id: Long = System.currentTimeMillis(),
+    val file: File,
+    val name: String,
+    val duration: String,
+    val size: String,
+    val date: String,
+    val hasTranscription: Boolean = false,
+    var isSelected: Boolean = false
+) {
+    val displayName: String
+        get() = name.removeSuffix(".wav")
+    
+    val transcriptionFile: File
+        get() = File(file.parent, "${file.nameWithoutExtension}.txt")
+}
+KOTLIN_END
+
+# 4. 更新 FilesFragment.kt
+echo "📝 更新 FilesFragment.kt..."
+cat > app/src/main/java/com/example/recordingapp/ui/files/FilesFragment.kt << 'KOTLIN_END'
 package com.example.recordingapp.ui.files
 
 import android.app.AlertDialog
@@ -282,3 +442,95 @@ class FilesFragment : Fragment() {
         _binding = null
     }
 }
+KOTLIN_END
+
+# 5. 更新 RecordingFileAdapter.kt
+echo "📝 更新 RecordingFileAdapter.kt..."
+cat > app/src/main/java/com/example/recordingapp/ui/files/RecordingFileAdapter.kt << 'KOTLIN_END'
+package com.example.recordingapp.ui.files
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.example.recordingapp.databinding.ItemRecordingFileBinding
+
+class RecordingFileAdapter(
+    private val onItemClick: (RecordingFile) -> Unit,
+    private val onItemLongClick: (RecordingFile) -> Boolean,
+    private val onRenameClick: (RecordingFile) -> Unit
+) : ListAdapter<RecordingFile, RecordingFileAdapter.ViewHolder>(DiffCallback()) {
+
+    var isSelectionMode = false
+        set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
+
+    inner class ViewHolder(private val binding: ItemRecordingFileBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(item: RecordingFile) {
+            binding.fileName.text = item.displayName
+            binding.fileInfo.text = "${item.duration} | ${item.size} | ${item.date}"
+            
+            // 显示转写标识
+            binding.transcriptionBadge.visibility = if (item.hasTranscription) View.VISIBLE else View.GONE
+            
+            binding.checkbox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+            binding.checkbox.isChecked = item.isSelected
+            
+            binding.root.setOnClickListener {
+                if (isSelectionMode) {
+                    item.isSelected = !item.isSelected
+                    binding.checkbox.isChecked = item.isSelected
+                }
+                onItemClick(item)
+            }
+            
+            binding.root.setOnLongClickListener {
+                onItemLongClick(item)
+            }
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val binding = ItemRecordingFileBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return ViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(getItem(position))
+    }
+
+    class DiffCallback : DiffUtil.ItemCallback<RecordingFile>() {
+        override fun areItemsTheSame(oldItem: RecordingFile, newItem: RecordingFile): Boolean {
+            return oldItem.file.absolutePath == newItem.file.absolutePath
+        }
+
+        override fun areContentsTheSame(oldItem: RecordingFile, newItem: RecordingFile): Boolean {
+            return oldItem == newItem
+        }
+    }
+}
+KOTLIN_END
+
+echo ""
+echo "✅ 所有文件更新完成！"
+echo ""
+echo "📋 更新摘要："
+echo "  ✅ AudioPlayer.kt - 公开 mediaPlayer 访问"
+echo "  ✅ nav_graph.xml - 添加播放页面导航"
+echo "  ✅ RecordingFile.kt - 添加 ID 和转写状态"
+echo "  ✅ FilesFragment.kt - 添加点击跳转到播放页面"
+echo "  ✅ RecordingFileAdapter.kt - 显示转写标识"
+echo ""
+echo "💾 备份文件保存在 backups/ 目录"
+echo ""
+echo "🎉 设置完成！现在可以运行 ./gradlew build 来构建项目"

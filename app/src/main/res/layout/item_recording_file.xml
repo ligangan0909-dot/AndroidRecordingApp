@@ -26,10 +26,24 @@
         android:maxLines="1"
         android:ellipsize="end"
         app:layout_constraintStart_toEndOf="@id/checkbox"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/transcription_badge"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         tools:text="2024_01_15_14_30_25" />
+
+    <TextView
+        android:id="@+id/transcription_badge"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:text="转"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:background="@drawable/bg_transcription_badge"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/file_info"

@@ -27,9 +27,6 @@ class RecordingFileAdapter(
             binding.fileName.text = item.displayName
             binding.fileInfo.text = "${item.duration} | ${item.size} | ${item.date}"
             
-            // 显示转写标识
-            binding.transcriptionBadge.visibility = if (item.hasTranscription) View.VISIBLE else View.GONE
-            
             binding.checkbox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
             binding.checkbox.isChecked = item.isSelected
             

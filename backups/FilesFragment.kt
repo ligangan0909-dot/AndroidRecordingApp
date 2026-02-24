@@ -10,11 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -55,13 +53,6 @@ class FilesFragment : Fragment() {
             onItemClick = { file ->
                 if (isSelectionMode) {
                     updateSelectionMode()
-                } else {
-                    // 导航到播放页面
-                    val bundle = bundleOf(
-                        "recordingId" to file.id,
-                        "filePath" to file.file.absolutePath
-                    )
-                    findNavController().navigate(R.id.action_nav_files_to_nav_playback, bundle)
                 }
             },
             onItemLongClick = { file ->
@@ -144,16 +135,13 @@ class FilesFragment : Fragment() {
         val duration = calculateDuration(file)
         val size = formatFileSize(file.length())
         val date = formatDate(file.lastModified())
-        val hasTranscription = File(file.parent, "${file.nameWithoutExtension}.txt").exists()
         
         return RecordingFile(
-            id = file.lastModified(),
             file = file,
             name = file.name,
             duration = duration,
             size = size,
-            date = date,
-            hasTranscription = hasTranscription
+            date = date
         )
     }
     

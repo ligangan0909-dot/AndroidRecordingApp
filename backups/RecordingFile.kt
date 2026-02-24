@@ -3,7 +3,6 @@ package com.example.recordingapp.ui.files
 import java.io.File
 
 data class RecordingFile(
-    val id: Long = System.currentTimeMillis(),
     val file: File,
     val name: String,
     val duration: String,

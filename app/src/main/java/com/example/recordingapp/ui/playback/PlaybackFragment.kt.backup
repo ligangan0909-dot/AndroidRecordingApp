@@ -6,14 +6,8 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ProgressBar
-import android.widget.ScrollView
 import android.widget.SeekBar
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -22,24 +16,13 @@ import com.example.recordingapp.R
 import com.example.recordingapp.RecordingApp
 import com.example.recordingapp.audio.AudioPlayer
 import com.example.recordingapp.data.model.TranscriptionState
-import com.example.recordingapp.ui.views.WaveformView
+import com.example.recordingapp.databinding.FragmentPlaybackBinding
 import kotlinx.coroutines.launch
 import java.io.File
 
 class PlaybackFragment : Fragment() {
-    private lateinit var toolbar: Toolbar
-    private lateinit var fileName: TextView
-    private lateinit var playPauseButton: ImageButton
-    private lateinit var seekBar: SeekBar
-    private lateinit var currentTime: TextView
-    private lateinit var totalTime: TextView
-    private lateinit var transcribeButton: Button
-    private lateinit var toggleViewButton: Button
-    private lateinit var waveformView: WaveformView
-    private lateinit var transcriptionScroll: ScrollView
-    private lateinit var transcriptionText: TextView
-    private lateinit var transcriptionProgress: ProgressBar
-    private lateinit var transcriptionStatus: TextView
+    private var _binding: FragmentPlaybackBinding? = null
+    private val binding get() = _binding!!
     
     private lateinit var audioPlayer: AudioPlayer
     private val handler = Handler(Looper.getMainLooper())
@@ -64,14 +47,14 @@ class PlaybackFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_playback, container, false)
+    ): View {
+        _binding = FragmentPlaybackBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        initViews(view)
         audioPlayer = AudioPlayer()
         setupToolbar()
         setupPlaybackControls()
@@ -81,34 +64,18 @@ class PlaybackFragment : Fragment() {
         loadExistingTranscription()
     }
     
-    private fun initViews(view: View) {
-        toolbar = view.findViewById(R.id.toolbar)
-        fileName = view.findViewById(R.id.file_name)
-        playPauseButton = view.findViewById(R.id.play_pause_button)
-        seekBar = view.findViewById(R.id.seek_bar)
-        currentTime = view.findViewById(R.id.current_time)
-        totalTime = view.findViewById(R.id.total_time)
-        transcribeButton = view.findViewById(R.id.transcribe_button)
-        toggleViewButton = view.findViewById(R.id.toggle_view_button)
-        waveformView = view.findViewById(R.id.waveform_view)
-        transcriptionScroll = view.findViewById(R.id.transcription_scroll)
-        transcriptionText = view.findViewById(R.id.transcription_text)
-        transcriptionProgress = view.findViewById(R.id.transcription_progress)
-        transcriptionStatus = view.findViewById(R.id.transcription_status)
-    }
-    
     private fun setupToolbar() {
-        toolbar.setNavigationOnClickListener {
+        binding.toolbar.setNavigationOnClickListener {
             findNavController().navigateUp()
         }
     }
     
     private fun setupPlaybackControls() {
-        playPauseButton.setOnClickListener {
+        binding.playPauseButton.setOnClickListener {
             togglePlayPause()
         }
         
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
                     audioPlayer.mediaPlayer?.seekTo(progress)
@@ -122,13 +89,13 @@ class PlaybackFragment : Fragment() {
         
         audioPlayer.onPlaybackComplete = {
             isPlaying = false
-            playPauseButton.setImageResource(android.R.drawable.ic_media_play)
+            binding.playPauseButton.setImageResource(android.R.drawable.ic_media_play)
             handler.removeCallbacks(updateSeekBarRunnable)
         }
     }
     
     private fun setupActionButtons() {
-        transcribeButton.setOnClickListener {
+        binding.transcribeButton.setOnClickListener {
             val recordingId = arguments?.getLong("recordingId", 0L).toString()
             val filePath = arguments?.getString("filePath") ?: return@setOnClickListener
             val file = File(filePath)
@@ -141,7 +108,7 @@ class PlaybackFragment : Fragment() {
             viewModel.startTranscription(recordingId, filePath, file)
         }
         
-        toggleViewButton.setOnClickListener {
+        binding.toggleViewButton.setOnClickListener {
             toggleView()
         }
     }
@@ -149,7 +116,7 @@ class PlaybackFragment : Fragment() {
     private fun loadRecording() {
         val filePath = arguments?.getString("filePath") ?: return
         val file = File(filePath)
-        fileName.text = file.nameWithoutExtension
+        binding.fileName.text = file.nameWithoutExtension
     }
     
     private fun togglePlayPause() {
@@ -171,27 +138,27 @@ class PlaybackFragment : Fragment() {
         
         if (audioPlayer.mediaPlayer == null) {
             audioPlayer.play(file)
-            seekBar.max = audioPlayer.getDuration()
+            binding.seekBar.max = audioPlayer.getDuration()
             updateTimeDisplay()
         } else {
             audioPlayer.resume()
         }
         
         isPlaying = true
-        playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
+        binding.playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
         handler.post(updateSeekBarRunnable)
     }
     
     private fun pausePlayback() {
         audioPlayer.pause()
         isPlaying = false
-        playPauseButton.setImageResource(android.R.drawable.ic_media_play)
+        binding.playPauseButton.setImageResource(android.R.drawable.ic_media_play)
         handler.removeCallbacks(updateSeekBarRunnable)
     }
     
     private fun updateSeekBar() {
         val currentPosition = audioPlayer.getCurrentPosition()
-        seekBar.progress = currentPosition
+        binding.seekBar.progress = currentPosition
         updateTimeDisplay()
     }
     
@@ -199,8 +166,8 @@ class PlaybackFragment : Fragment() {
         val current = audioPlayer.getCurrentPosition()
         val total = audioPlayer.getDuration()
         
-        currentTime.text = formatTime(current)
-        totalTime.text = formatTime(total)
+        binding.currentTime.text = formatTime(current)
+        binding.totalTime.text = formatTime(total)
     }
     
     private fun formatTime(milliseconds: Int): String {
@@ -221,13 +188,13 @@ class PlaybackFragment : Fragment() {
                 showingTranscription = !showingTranscription
                 
                 if (showingTranscription) {
-                    waveformView.visibility = View.GONE
-                    transcriptionScroll.visibility = View.VISIBLE
-                    toggleViewButton.text = "查看波形"
+                    binding.waveformView.visibility = View.GONE
+                    binding.transcriptionScroll.visibility = View.VISIBLE
+                    binding.toggleViewButton.text = "查看波形"
                 } else {
-                    waveformView.visibility = View.VISIBLE
-                    transcriptionScroll.visibility = View.GONE
-                    toggleViewButton.text = "查看转写"
+                    binding.waveformView.visibility = View.VISIBLE
+                    binding.transcriptionScroll.visibility = View.GONE
+                    binding.toggleViewButton.text = "查看转写"
                 }
             }
         }
@@ -238,64 +205,64 @@ class PlaybackFragment : Fragment() {
             viewModel.transcriptionState.collect { state ->
                 when (state) {
                     is TranscriptionState.Idle -> {
-                        transcriptionProgress.visibility = View.GONE
-                        transcriptionStatus.visibility = View.GONE
-                        toggleViewButton.visibility = View.GONE
+                        binding.transcriptionProgress.visibility = View.GONE
+                        binding.transcriptionStatus.visibility = View.GONE
+                        binding.toggleViewButton.visibility = View.GONE
                     }
                     
                     is TranscriptionState.Uploading -> {
-                        transcriptionProgress.visibility = View.VISIBLE
-                        transcriptionStatus.visibility = View.VISIBLE
-                        transcriptionStatus.text = "正在上传..."
-                        transcriptionScroll.visibility = View.VISIBLE
-                        waveformView.visibility = View.GONE
+                        binding.transcriptionProgress.visibility = View.VISIBLE
+                        binding.transcriptionStatus.visibility = View.VISIBLE
+                        binding.transcriptionStatus.text = "正在上传..."
+                        binding.transcriptionScroll.visibility = View.VISIBLE
+                        binding.waveformView.visibility = View.GONE
                     }
                     
                     is TranscriptionState.Processing -> {
-                        transcriptionProgress.visibility = View.VISIBLE
-                        transcriptionStatus.visibility = View.VISIBLE
-                        transcriptionStatus.text = "正在转写..."
+                        binding.transcriptionProgress.visibility = View.VISIBLE
+                        binding.transcriptionStatus.visibility = View.VISIBLE
+                        binding.transcriptionStatus.text = "正在转写..."
                     }
                     
                     is TranscriptionState.Success -> {
-                        transcriptionProgress.visibility = View.GONE
-                        transcriptionStatus.visibility = View.GONE
-                        transcriptionText.text = state.result.fullText
-                        toggleViewButton.visibility = View.VISIBLE
+                        binding.transcriptionProgress.visibility = View.GONE
+                        binding.transcriptionStatus.visibility = View.GONE
+                        binding.transcriptionText.text = state.result.fullText
+                        binding.toggleViewButton.visibility = View.VISIBLE
                         
                         // Show transcription view
-                        transcriptionScroll.visibility = View.VISIBLE
-                        waveformView.visibility = View.GONE
+                        binding.transcriptionScroll.visibility = View.VISIBLE
+                        binding.waveformView.visibility = View.GONE
                         showingTranscription = true
-                        toggleViewButton.text = "查看波形"
+                        binding.toggleViewButton.text = "查看波形"
                     }
                     
                     is TranscriptionState.Error -> {
-                        transcriptionProgress.visibility = View.GONE
-                        transcriptionStatus.visibility = View.GONE
+                        binding.transcriptionProgress.visibility = View.GONE
+                        binding.transcriptionStatus.visibility = View.GONE
                         
                         val errorMessage = when {
-                            state.error.message?.contains("File") == true -> "文件错误: ${state.error.message}"
-                            state.error.message?.contains("Network") == true -> "网络错误，请检查网络连接"
-                            state.error.message?.contains("API") == true -> "API错误，请检查设置"
+                            state.error.message.contains("File") -> "文件错误: ${state.error.message}"
+                            state.error.message.contains("Network") -> "网络错误，请检查网络连接"
+                            state.error.message.contains("API") -> "API错误，请检查设置"
                             else -> "转写失败: ${state.error.message}"
                         }
                         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
                         
                         // Switch back to waveform view
-                        waveformView.visibility = View.VISIBLE
-                        transcriptionScroll.visibility = View.GONE
+                        binding.waveformView.visibility = View.VISIBLE
+                        binding.transcriptionScroll.visibility = View.GONE
                         showingTranscription = false
                     }
                     
                     is TranscriptionState.Cancelled -> {
-                        transcriptionProgress.visibility = View.GONE
-                        transcriptionStatus.visibility = View.GONE
+                        binding.transcriptionProgress.visibility = View.GONE
+                        binding.transcriptionStatus.visibility = View.GONE
                         Toast.makeText(requireContext(), "转写已取消", Toast.LENGTH_SHORT).show()
                         
                         // Switch back to waveform view
-                        waveformView.visibility = View.VISIBLE
-                        transcriptionScroll.visibility = View.GONE
+                        binding.waveformView.visibility = View.VISIBLE
+                        binding.transcriptionScroll.visibility = View.GONE
                         showingTranscription = false
                     }
                 }
@@ -306,7 +273,7 @@ class PlaybackFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.hasTranscription.collect { hasTranscription ->
                 if (hasTranscription) {
-                    toggleViewButton.visibility = View.VISIBLE
+                    binding.toggleViewButton.visibility = View.VISIBLE
                 }
             }
         }
@@ -333,5 +300,6 @@ class PlaybackFragment : Fragment() {
         super.onDestroyView()
         handler.removeCallbacks(updateSeekBarRunnable)
         audioPlayer.release()
+        _binding = null
     }
 }

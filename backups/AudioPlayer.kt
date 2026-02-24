@@ -4,8 +4,7 @@ import android.media.MediaPlayer
 import java.io.File
 
 class AudioPlayer {
-    var mediaPlayer: MediaPlayer? = null
-        private set
+    private var mediaPlayer: MediaPlayer? = null
     private var isPlayingState = false
     
     var onPlaybackComplete: (() -> Unit)? = null

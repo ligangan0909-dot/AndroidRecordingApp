@@ -12,27 +12,10 @@
     <fragment
         android:id="@+id/nav_files"
         android:name="com.example.recordingapp.ui.files.FilesFragment"
-        android:label="@string/nav_files">
-        <action
-            android:id="@+id/action_nav_files_to_nav_playback"
-            app:destination="@id/nav_playback" />
-    </fragment>
+        android:label="@string/nav_files" />
 
     <fragment
         android:id="@+id/nav_profile"
         android:name="com.example.recordingapp.ui.profile.ProfileFragment"
         android:label="@string/nav_profile" />
-
-    <fragment
-        android:id="@+id/nav_playback"
-        android:name="com.example.recordingapp.ui.playback.PlaybackFragment"
-        android:label="播放">
-        <argument
-            android:name="recordingId"
-            app:argType="long"
-            android:defaultValue="0L" />
-        <argument
-            android:name="filePath"
-            app:argType="string" />
-    </fragment>
 </navigation>
