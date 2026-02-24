@@ -16,6 +16,9 @@ import com.example.recordingapp.R
 import com.example.recordingapp.audio.AudioRecordManager
 import com.example.recordingapp.databinding.FragmentRecordingBinding
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.random.Random
 
 class RecordingFragment : Fragment() {
@@ -79,7 +82,9 @@ class RecordingFragment : Fragment() {
     private fun startRecording() {
         try {
             val outputDir = requireContext().getExternalFilesDir(null)
-            val outputFile = File(outputDir, "recording_${System.currentTimeMillis()}.wav")
+            val dateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
+            val fileName = dateFormat.format(Date()) + ".wav"
+            val outputFile = File(outputDir, fileName)
             
             audioRecordManager = AudioRecordManager()
             audioRecordManager?.startRecording(outputFile)
