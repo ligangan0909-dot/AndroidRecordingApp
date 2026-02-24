@@ -7,8 +7,6 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
 import com.example.recordingapp.R
-import kotlin.math.abs
-import kotlin.random.Random
 
 class WaveformView @JvmOverloads constructor(
     context: Context,
@@ -18,11 +16,11 @@ class WaveformView @JvmOverloads constructor(
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val amplitudes = mutableListOf<Float>()
-    private val maxAmplitudes = 50
+    private val maxAmplitudes = 60
     
     init {
         paint.color = ContextCompat.getColor(context, R.color.orange_primary)
-        paint.strokeWidth = 8f
+        paint.strokeWidth = 4f
         paint.strokeCap = Paint.Cap.ROUND
     }
     
@@ -48,10 +46,18 @@ class WaveformView @JvmOverloads constructor(
         val height = height.toFloat()
         val centerY = height / 2f
         val barWidth = width / maxAmplitudes
+        val spacing = 2f
         
         amplitudes.forEachIndexed { index, amplitude ->
             val x = index * barWidth + barWidth / 2
-            val barHeight = amplitude * height / 2f * 0.8f
+            val barHeight = amplitude * height / 2f * 0.9f
+            
+            val alpha = if (index > amplitudes.size - 10) {
+                255
+            } else {
+                (100 + (index.toFloat() / amplitudes.size * 155)).toInt()
+            }
+            paint.alpha = alpha
             
             canvas.drawLine(
                 x,
@@ -61,5 +67,7 @@ class WaveformView @JvmOverloads constructor(
                 paint
             )
         }
+        
+        paint.alpha = 255
     }
 }

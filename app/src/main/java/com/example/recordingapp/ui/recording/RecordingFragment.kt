@@ -86,6 +86,7 @@ class RecordingFragment : Fragment() {
             
             isRecording = true
             binding.recordButton.setRecording(true)
+            binding.recordingHint.text = "录音中..."
             recordingStartTime = System.currentTimeMillis()
             
             startTimeUpdate()
@@ -104,6 +105,7 @@ class RecordingFragment : Fragment() {
             
             isRecording = false
             binding.recordButton.setRecording(false)
+            binding.recordingHint.text = "点击开始录音"
             binding.waveformView.clear()
             
             stopTimeUpdate()
