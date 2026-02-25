@@ -3,15 +3,15 @@ package com.example.recordingapp.data.model
 /**
  * Sealed class hierarchy representing different types of transcription errors.
  */
-sealed class TranscriptionError(message: String, val cause: Throwable? = null) : Exception(message, cause) {
-    data class NetworkError(override val message: String, override val cause: Throwable? = null) : TranscriptionError(message, cause)
+sealed class TranscriptionError(message: String, cause: Throwable? = null) : Exception(message, cause) {
+    data class NetworkError(override val message: String, val errorCause: Throwable? = null) : TranscriptionError(message, errorCause)
     data class ApiError(val code: Int, override val message: String) : TranscriptionError(message)
     data class FileError(override val message: String) : TranscriptionError(message)
     data class AuthError(override val message: String) : TranscriptionError(message)
     data class AuthenticationError(override val message: String) : TranscriptionError(message)
     data class TimeoutError(override val message: String) : TranscriptionError(message)
     data class ValidationError(override val message: String) : TranscriptionError(message)
-    data class UnknownError(override val message: String, override val cause: Throwable? = null) : TranscriptionError(message, cause)
+    data class UnknownError(override val message: String, val errorCause: Throwable? = null) : TranscriptionError(message, errorCause)
     
     fun toUserMessage(): String {
         return when (this) {

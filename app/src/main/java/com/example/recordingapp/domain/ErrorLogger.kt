@@ -11,7 +11,7 @@ object ErrorLogger {
         
         when (error) {
             is TranscriptionError.NetworkError -> {
-                Log.e(TAG, "Network Error: $message", error.cause)
+                Log.e(TAG, "Network Error: $message", error.errorCause)
                 logToAnalytics("network_error", message)
             }
             is TranscriptionError.AuthError -> {
@@ -42,7 +42,7 @@ object ErrorLogger {
                 logToAnalytics("timeout_error", message)
             }
             is TranscriptionError.UnknownError -> {
-                Log.e(TAG, "Unknown Error: $message", error.cause)
+                Log.e(TAG, "Unknown Error: $message", error.errorCause)
                 reportToCrashlytics(error, message)
             }
         }
