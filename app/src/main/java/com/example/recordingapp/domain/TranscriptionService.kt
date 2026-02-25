@@ -23,12 +23,14 @@ class TranscriptionService(
     private val activeCancellations = mutableSetOf<String>()
     
     companion object {
-    package com.example.recordingapp.domain
+        private const val TAG = "TranscriptionService"
+    }
 
-import android.util.Log
-import com.example.rec  
-import android.util.Log
-import com.exioFimport com.example.rec Fimport com.example.recordingapp.data.model.TranscriptionResumiimport com.example.recordingapp.data.model.TranscriptionStidate audio file
+    override fun transcribe(recordingId: String, audioFilePath: String): Flow<TranscriptionState> = flow {
+        try {
+            emit(TranscriptionState.Idle)
+            
+            // Validate audio file
             val file = File(audioFilePath)
             val validationError = validateAudioFile(file)
             if (validationError != null) {
