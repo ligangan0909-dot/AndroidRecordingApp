@@ -24,7 +24,7 @@ class TranscriptionProviderManager(
     }
     
     fun getSelectedProviderType(): String {
-        return prefs.getString(KEY_SELECTED_PROVIDER, PROVIDER_OPENAI) ?: PROVIDER_OPENAI
+        return prefs.getString(KEY_SELECTED_PROVIDER, PROVIDER_DOUBAO) ?: PROVIDER_DOUBAO
     }
     
     fun setSelectedProviderType(providerType: String) {
@@ -43,8 +43,8 @@ class TranscriptionProviderManager(
             PROVIDER_OPENAI -> createOpenAIProvider()
             PROVIDER_DOUBAO -> createDoubaoProvider()
             else -> {
-                Log.w(TAG, "Unknown provider type: $providerType, falling back to OpenAI")
-                createOpenAIProvider()
+                Log.w(TAG, "Unknown provider type: $providerType, falling back to Doubao")
+                createDoubaoProvider()
             }
         }
         
