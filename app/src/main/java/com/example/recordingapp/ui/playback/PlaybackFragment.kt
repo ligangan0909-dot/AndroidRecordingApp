@@ -347,7 +347,7 @@ class PlaybackFragment : Fragment() {
                 }
             }
             is TranscriptionError.FileError -> "• 检查音频文件是否存在\n• 确认应用有读取文件的权限\n• 尝试重新录制音频"
-            is TranscriptionError.AuthError, is TranscriptionError.AuthenticationError -> "• 进入设置页面检查豆包语音配置\n• 确认 4 个参数都已正确填写\n• 点击"验证凭证"按钮测试配置"
+            is TranscriptionError.AuthError, is TranscriptionError.AuthenticationError -> "• 进入设置页面检查豆包语音配置\n• 确认 4 个参数都已正确填写\n• 点击验证凭证按钮测试配置"
             is TranscriptionError.TimeoutError -> "• 检查网络连接速度\n• 音频文件可能太大\n• 稍后再试"
             is TranscriptionError.ValidationError -> "• 检查豆包语音配置是否完整\n• 确认所有必填字段都已填写"
             is TranscriptionError.UnknownError -> "• 请将错误信息复制并发送给开发者\n• 尝试重启应用\n• 检查应用是否需要更新"
