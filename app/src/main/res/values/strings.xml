@@ -32,11 +32,15 @@
     <string name="cached_result">缓存结果</string>
     
     <!-- Settings Activity -->
-    <string name="api_key_settings">API密钥设置</string>
-    <string name="api_key_description">请输入您的OpenAI API密钥以启用转写功能</string>
+    <string name="api_key_settings">转写服务设置</string>
+    <string name="api_key_description">选择转写服务提供商并配置相应的凭证</string>
+    <string name="transcription_provider">转写服务提供商</string>
+    <string name="provider_openai">OpenAI Whisper</string>
+    <string name="provider_doubao">豆包语音</string>
     <string name="api_key">API密钥</string>
     <string name="save">保存</string>
     <string name="clear">清除</string>
+    <string name="validate">验证</string>
     <string name="api_key_configured">API密钥已配置</string>
     <string name="api_key_empty">API密钥不能为空</string>
     <string name="api_key_invalid_format">API密钥格式无效</string>
@@ -44,6 +48,19 @@
     <string name="api_key_save_failed">保存失败: %s</string>
     <string name="api_key_cleared">API密钥已清除</string>
     <string name="api_key_help">API密钥应以 sk- 开头，长度为20-200个字符</string>
+    
+    <!-- Doubao Settings -->
+    <string name="doubao_app_id">App ID</string>
+    <string name="doubao_access_key_id">Access Key ID</string>
+    <string name="doubao_secret_key">Secret Key</string>
+    <string name="doubao_cluster_id">Cluster ID</string>
+    <string name="doubao_config_empty">所有豆包配置字段都是必填的</string>
+    <string name="doubao_config_saved">豆包配置已保存</string>
+    <string name="doubao_config_cleared">豆包配置已清除</string>
+    <string name="doubao_help">请从火山引擎控制台获取豆包语音服务的配置信息</string>
+    <string name="credentials_valid">凭证验证成功</string>
+    <string name="credentials_invalid">凭证验证失败</string>
+    <string name="validating">验证中…</string>
     
     <!-- Bottom Navigation -->
     <string name="nav_recording">录音</string>

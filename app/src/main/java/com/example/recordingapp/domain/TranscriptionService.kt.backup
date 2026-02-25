@@ -1,10 +1,9 @@
 package com.example.recordingapp.domain
 
-import android.util.Log
 import com.example.recordingapp.data.model.TranscriptionError
 import com.example.recordingapp.data.model.TranscriptionResult
 import com.example.recordingapp.data.model.TranscriptionState
-import com.example.recordingapp.data.network.TranscriptionProviderManager
+import com.example.recordingapp.data.network.IDeepSeekApiClient
 import com.example.recordingapp.data.repository.ITranscriptionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -12,18 +11,15 @@ import kotlinx.coroutines.delay
 import java.io.File
 
 /**
- * Implementation of transcription service with multi-provider support
- * Supports dynamic switching between OpenAI and Doubao providers
+ * Implementation of transcription service
+ * Simplified version: Only transcription and summary (no speaker diarization, no task extraction)
  */
 class TranscriptionService(
-    private val providerManager: TranscriptionProviderManager,
+    private val apiClient: IDeepSeekApiClient,
     private val repository: ITranscriptionRepository
 ) : ITranscriptionService {
 
     private val activeCancellations = mutableSetOf<String>()
-    
-    companion obje    companion obje    companion obje    companion obje  ce"
-    }
 
     override fun transcribe(
         recordingId: String,
@@ -47,11 +43,6 @@ class TranscriptionService(
                 emit(TranscriptionState.Cancelled)
                 return@flow
             }
-            
-            // Get current provider
-            val apiClient = providerManager.getProvider()
-            val providerType = providerManager.getSelectedProviderType()
-            Log.d(TAG, "Using provider: $providerType (${apiClient.getProviderName()})")
             
             // Upload audio
             emit(TranscriptionState.Uploading(0))
@@ -95,7 +86,6 @@ class TranscriptionService(
                     // Save to repository
                     repository.saveTranscription(transcriptionResult)
                     
-                    Log.d(TAG, "Transcription successful with provider: $providerType")
                     emit(TranscriptionState.Success(transcriptionResult))
                 },
                 onFailure = { error ->
@@ -105,7 +95,7 @@ class TranscriptionService(
                     }
                     
                     // Log error with context
-                    ErrorLogger.logError(transcriptionError, "Transcription API call with provider: $providerType")
+                    ErrorLogger.logError(transcriptionError, "Transcription API call")
                     
                     // Log timeout if duration is excessive
                     if (duration > 120000) { // 2 minutes
@@ -135,13 +125,7 @@ class TranscriptionService(
 
     override fun cancelTranscription(recordingId: String) {
         activeCancellations.add(recordingId)
-        // Cancel on current provider
-        try {
-            val apiClient = providerManager.getProvider()
-            apiClient.cancelTranscription()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error cancelling transcription", e)
-        }
+        apiClient.cancelTranscription()
     }
 
     override suspend fun getCachedResult(recordingId: String): TranscriptionResult? {

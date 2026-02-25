@@ -8,6 +8,8 @@ import com.example.recordingapp.data.network.TranscriptionProviderManager
 import com.example.recordingapp.data.repository.TranscriptionRepository
 import com.example.recordingapp.data.security.SecureApiKeyManager
 import com.example.recordingapp.domain.TranscriptionService
+import com.example.recordingapp.ui.settings.SettingsViewModel
+import com.example.recordingapp.ui.transcription.TranscriptionViewModel
 
 /**
  * Application class for manual dependency injection.
@@ -20,10 +22,9 @@ import com.example.recordingapp.domain.TranscriptionService
  * - ApiClient
  * - Repository
  * - TranscriptionService
+ * - ViewModels
  */
-class RecordingApp : Application() {
-    
-    // Database
+class RecordingAclass RecordingAclass RecordingAclass Ree
     val database: TranscriptionDatabase by lazy {
         TranscriptionDatabase.getInstance(this)
     }
@@ -55,5 +56,14 @@ class RecordingApp : Application() {
     // Service
     val transcriptionService: TranscriptionService by lazy {
         TranscriptionService(apiClient, transcriptionRepository)
+    }
+    
+    // ViewModels
+    val settingsViewModel: SettingsViewModel by lazy {
+        SettingsViewModel(apiKeyManager)
+    }
+    
+    val transcriptionViewModel: TranscriptionViewModel by lazy {
+        TranscriptionViewModel(transcriptionService)
     }
 }

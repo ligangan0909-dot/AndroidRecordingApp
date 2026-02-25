@@ -2,12 +2,13 @@ package com.example.recordingapp
 
 import android.app.Application
 import com.example.recordingapp.data.database.TranscriptionDatabase
-import com.example.recordingapp.data.network.DeepSeekApiClient
 import com.example.recordingapp.data.network.SecureNetworkManager
 import com.example.recordingapp.data.network.TranscriptionProviderManager
 import com.example.recordingapp.data.repository.TranscriptionRepository
 import com.example.recordingapp.data.security.SecureApiKeyManager
 import com.example.recordingapp.domain.TranscriptionService
+import com.example.recordingapp.ui.settings.SettingsViewModel
+import com.example.recordingapp.ui.transcription.TranscriptionViewModel
 
 /**
  * Application class for manual dependency injection.
@@ -16,15 +17,12 @@ import com.example.recordingapp.domain.TranscriptionService
  * - Database
  * - ApiKeyManager
  * - NetworkManager
- * - ProviderManager
- * - ApiClient
+ * - ProviderManager (supports OpenAI and Doubao)
  * - Repository
- * - TranscriptionService
+ * - TranscriptionService (with multi-provider support)
+ * - ViewModels
  */
-class RecordingApp : Application() {
-    
-    // Database
-    val database: TranscriptionDatabase by lazy {
+class RecordingApp : Application() class RecordingApp : Application() class TranscriptionDatabase by lazy {
         TranscriptionDatabase.getInstance(this)
     }
     
@@ -38,13 +36,9 @@ class RecordingApp : Application() {
         SecureNetworkManager(apiKeyManager)
     }
     
-    // Provider Manager
+    // Provider Manager (supports OpenAI and Doubao)
     val providerManager: TranscriptionProviderManager by lazy {
         TranscriptionProviderManager(this, networkManager)
-    }
-    
-    val apiClient: DeepSeekApiClient by lazy {
-        DeepSeekApiClient(networkManager.createSecureHttpClient())
     }
     
     // Repository
@@ -52,8 +46,17 @@ class RecordingApp : Application() {
         TranscriptionRepository(database.transcriptionDao())
     }
     
-    // Service
+    // Service (with multi-provider support)
     val transcriptionService: TranscriptionService by lazy {
-        TranscriptionService(apiClient, transcriptionRepository)
+        TranscriptionService(providerManager, transcriptionRepository)
+    }
+    
+    // ViewModels
+    val settingsViewModel: SettingsViewModel by lazy {
+        SettingsViewModel(apiKeyManager)
+    }
+    
+    val transcriptionViewModel: TranscriptionViewModel by lazy {
+        TranscriptionViewModel(transcriptionService)
     }
 }

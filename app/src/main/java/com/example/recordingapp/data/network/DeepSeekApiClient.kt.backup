@@ -23,20 +23,20 @@ import java.util.UUID
 class DeepSeekApiClient(
     private val okHttpClient: OkHttpClient,
     private val baseUrl: String = DEFAULT_BASE_URL
-) : IDeepSeekApiClient, ITranscriptionApiClient {
-
+) : IDeepSeekApiClient {
+    
     private val apiService: DeepSeekApiService
-
+    
     init {
         val retrofit = Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-
+        
         apiService = retrofit.create(DeepSeekApiService::class.java)
     }
-
+    
     override suspend fun transcribeAudio(
         audioFile: File,
         enableDiarization: Boolean,
@@ -46,45 +46,40 @@ class DeepSeekApiClient(
         return try {
             if (!audioFile.exists()) {
                 return Result.failure(
-                    TranscriptionException(
-                        TranscriptionError.FileError("文件不存在: ${audioFile.path}")
-                    )
+                    TranscriptionException(TranscriptionError.FileError("文件不存在: ${audioFile.path}"))
                 )
             }
-
+            
             if (!audioFile.canRead()) {
                 return Result.failure(
-                    TranscriptionException(
-                        TranscriptionError.FileError("无法读取文件: ${audioFile.path}")
-                    )
+                    TranscriptionException(TranscriptionError.FileError("无法读取文件: ${audioFile.path}"))
                 )
             }
-
+            
             val maxSizeBytes = MAX_FILE_SIZE_MB * 1024 * 1024
             if (audioFile.length() > maxSizeBytes) {
                 return Result.failure(
-                    TranscriptionException(
-                        TranscriptionError.FileError("文件大小超过${MAX_FILE_SIZE_MB}MB限制")
-                    )
+                    TranscriptionException(TranscriptionError.FileError("文件大小超过${MAX_FILE_SIZE_MB}MB限制"))
                 )
             }
-
+            
             Log.d(TAG, "Starting Whisper transcription for file: ${audioFile.name}")
-
+            
             val filePart = createFilePart(audioFile)
             val modelPart = "whisper-1".toRequestBody(TEXT_PLAIN_MEDIA_TYPE)
             val languagePart = "zh".toRequestBody(TEXT_PLAIN_MEDIA_TYPE)
-
+            
             val response = apiService.transcribeAudio(
                 file = filePart,
                 model = modelPart,
                 language = languagePart
             )
-
+            
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
                     Log.d(TAG, "Transcription successful")
+                    
                     val transcriptionResponse = TranscriptionResponse(
                         transcriptionId = UUID.randomUUID().toString(),
                         fullText = body.text,
@@ -94,96 +89,72 @@ class DeepSeekApiClient(
                         tasks = emptyList(),
                         summary = ""
                     )
+                    
                     Result.success(transcriptionResponse)
                 } else {
                     Log.e(TAG, "Response body is null")
                     Result.failure(
-                        TranscriptionException(
-                            TranscriptionError.ApiError(response.code(), "响应体为空")
-                        )
+                        TranscriptionException(TranscriptionError.ApiError(response.code(), "响应体为空"))
                     )
                 }
             } else {
                 val errorMessage = response.errorBody()?.string() ?: response.message()
                 Log.e(TAG, "API error: ${response.code()} - $errorMessage")
-                Result.failure(
-                    TranscriptionException(
-                        mapHttpError(response.code(), errorMessage)
-                    )
-                )
+                Result.failure(TranscriptionException(mapHttpError(response.code(), errorMessage)))
             }
+            
         } catch (e: CancellationException) {
             Log.d(TAG, "Transcription cancelled")
             throw e
         } catch (e: UnknownHostException) {
             Log.e(TAG, "Network error: Unknown host", e)
             Result.failure(
-                TranscriptionException(
-                    TranscriptionError.NetworkError("无法连接到服务器，请检查网络连接")
-                )
+                TranscriptionException(TranscriptionError.NetworkError("无法连接到服务器，请检查网络连接"))
             )
         } catch (e: SocketTimeoutException) {
             Log.e(TAG, "Timeout error", e)
             Result.failure(
-                TranscriptionException(
-                    TranscriptionError.TimeoutError("请求超时，请检查网络连接或稍后重试")
-                )
+                TranscriptionException(TranscriptionError.TimeoutError("请求超时，请检查网络连接或稍后重试"))
             )
         } catch (e: IOException) {
             Log.e(TAG, "Network error", e)
             Result.failure(
-                TranscriptionException(
-                    TranscriptionError.NetworkError("网络错误: ${e.message}")
-                )
+                TranscriptionException(TranscriptionError.NetworkError("网络错误: ${e.message}"))
             )
         } catch (e: HttpException) {
             Log.e(TAG, "HTTP error: ${e.code()}", e)
             Result.failure(
-                TranscriptionException(
-                    mapHttpError(e.code(), e.message())
-                )
+                TranscriptionException(mapHttpError(e.code(), e.message()))
             )
         } catch (e: SecurityException) {
             Log.e(TAG, "Security error", e)
             Result.failure(
-                TranscriptionException(
-                    TranscriptionError.AuthError(e.message ?: "认证失败")
-                )
+                TranscriptionException(TranscriptionError.AuthError(e.message ?: "认证失败"))
             )
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error", e)
             Result.failure(
-                TranscriptionException(
-                    TranscriptionError.NetworkError("未知错误: ${e.message}")
-                )
+                TranscriptionException(TranscriptionError.NetworkError("未知错误: ${e.message}"))
             )
         }
     }
-
+    
     override suspend fun validateApiKey(apiKey: String): Result<Boolean> {
         if (!apiKey.startsWith("sk-")) {
             return Result.success(false)
         }
-
+        
         if (apiKey.length !in API_KEY_MIN_LENGTH..API_KEY_MAX_LENGTH) {
             return Result.success(false)
         }
-
+        
         return Result.success(true)
     }
-
-    override suspend fun validateCredentials(): Result<Boolean> {
-        // For OpenAI Whisper, credentials are validated via the API key in the HTTP client
-        // This is a simplified validation - just check if we can make a request
-        return Result.success(true)
-    }
-
+    
     override fun cancelTranscription() {
         Log.d(TAG, "Cancellation requested")
     }
-
-    override fun getProviderName(): String = "OpenAI Whisper"
-
+    
     private fun createFilePart(audioFile: File): MultipartBody.Part {
         val requestBody = audioFile.asRequestBody(AUDIO_WAV_MEDIA_TYPE)
         return MultipartBody.Part.createFormData(
@@ -192,7 +163,7 @@ class DeepSeekApiClient(
             body = requestBody
         )
     }
-
+    
     private fun mapHttpError(code: Int, message: String): TranscriptionError {
         return when (code) {
             401 -> TranscriptionError.AuthError("API密钥无效或已过期")
@@ -203,7 +174,7 @@ class DeepSeekApiClient(
             else -> TranscriptionError.ApiError(code, message)
         }
     }
-
+    
     companion object {
         private const val TAG = "DeepSeekApiClient"
         private const val DEFAULT_BASE_URL = "https://api.openai.com/v1/"
