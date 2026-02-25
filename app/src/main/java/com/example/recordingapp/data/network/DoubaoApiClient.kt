@@ -38,55 +38,80 @@ class DoubaoApiClient(
     ): Result<TranscriptionResponse> = withContext(Dispatchers.IO) {
         try {
             val config = apiKeyManager.getDoubaoConfig()
-                ?: return@withContext Result.failure(
-                    TranscriptionError.AuthError("Doubao credentials not configured")
-                )
-            
-            if (!audioFile.exists() || !audioFile.canRead()) {
+            if (config == null) {
+                Log.e(TAG, "Doubao config is null")
                 return@withContext Result.failure(
-                    TranscriptionError.FileError("Audio file not found or not readable")
+                    TranscriptionError.AuthenticationError("豆包凭证未配置")
                 )
             }
             
-            Log.d(TAG, "Starting transcription: ${audioFile.name}, size: ${audioFile.length()}")
+            Log.d(TAG, "Doubao config loaded - AppId: ${config.appId.take(4)}***, Cluster: ${config.clusterId}")
+            
+            if (!audioFile.exists() || !audioFile.canRead()) {
+                Log.e(TAG, "Audio file error - exists: ${audioFile.exists()}, canRead: ${audioFile.canRead()}")
+                return@withContext Result.failure(
+                    TranscriptionError.FileError("音频文件不存在或无法读取")
+                )
+            }
+            
+            Log.d(TAG, "Starting transcription: ${audioFile.name}, size: ${audioFile.length()} bytes")
             
             val client = networkManager.createSecureHttpClient()
             val requestBody = buildMultipartRequest(audioFile, config)
             val request = buildRequest(requestBody, config)
             
+            Log.d(TAG, "Request URL: ${request.url}")
+            Log.d(TAG, "Request headers: ${request.headers}")
+            
             currentCall = client.newCall(request)
             val response = currentCall?.execute()
             
+            val responseCode = response?.code ?: -1
+            val responseBody = response?.body?.string() ?: ""
+            
+            Log.d(TAG, "Response code: $responseCode")
+            Log.d(TAG, "Response body: $responseBody")
+            
             if (response == null || !response.isSuccessful) {
-                val errorBody = response?.body?.string() ?: "Unknown error"
-                Log.e(TAG, "Transcription failed: ${response?.code} - $errorBody")
+                Log.e(TAG, "Transcription failed - code: $responseCode, body: $responseBody")
+                
+                val errorMessage = try {
+                    val json = JSONObject(responseBody)
+                    json.optString("message", responseBody)
+                } catch (e: Exception) {
+                    responseBody
+                }
+                
                 return@withContext Result.failure(
                     TranscriptionError.ApiError(
-                        response?.code ?: 500,
-                        "Transcription failed: $errorBody"
+                        responseCode,
+                        "豆包API错误: $errorMessage"
                     )
                 )
             }
             
-            val responseBody = response.body?.string()
-                ?: return@withContext Result.failure(
-                    TranscriptionError.ApiError(500, "Empty response body")
+            if (responseBody.isEmpty()) {
+                Log.e(TAG, "Empty response body")
+                return@withContext Result.failure(
+                    TranscriptionError.ApiError(500, "服务器返回空响应")
                 )
+            }
             
-            Log.d(TAG, "Transcription response received")
-            
+            Log.d(TAG, "Parsing transcription response...")
             val transcriptionResponse = parseTranscriptionResponse(responseBody)
+            Log.d(TAG, "Transcription successful - text length: ${transcriptionResponse.fullText.length}")
+            
             Result.success(transcriptionResponse)
             
         } catch (e: CancellationException) {
             Log.d(TAG, "Transcription cancelled")
-            Result.failure(TranscriptionError.NetworkError("Transcription cancelled"))
+            Result.failure(TranscriptionError.NetworkError("转写已取消"))
         } catch (e: IOException) {
             Log.e(TAG, "Network error during transcription", e)
-            Result.failure(TranscriptionError.NetworkError(e.message ?: "Network error"))
+            Result.failure(TranscriptionError.NetworkError("网络错误: ${e.message}"))
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error during transcription", e)
-            Result.failure(TranscriptionError.NetworkError(e.message ?: "Unknown error"))
+            Result.failure(TranscriptionError.UnknownError("未知错误: ${e.message}", e))
         } finally {
             currentCall = null
         }
@@ -94,8 +119,20 @@ class DoubaoApiClient(
     
     override suspend fun validateCredentials(): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            val hasConfig = apiKeyManager.hasDoubaoConfig()
-            Result.success(hasConfig)
+            val config = apiKeyManager.getDoubaoConfig()
+            if (config == null) {
+                Log.e(TAG, "Validation failed: config is null")
+                return@withContext Result.success(false)
+            }
+            
+            Log.d(TAG, "Validation - AppId: ${config.appId.isNotEmpty()}, AccessKey: ${config.accessKeyId.isNotEmpty()}, SecretKey: ${config.secretKey.isNotEmpty()}, Cluster: ${config.clusterId.isNotEmpty()}")
+            
+            val isValid = config.appId.isNotEmpty() && 
+                         config.accessKeyId.isNotEmpty() && 
+                         config.secretKey.isNotEmpty() && 
+                         config.clusterId.isNotEmpty()
+            
+            Result.success(isValid)
         } catch (e: Exception) {
             Log.e(TAG, "Error validating credentials", e)
             Result.failure(e)
