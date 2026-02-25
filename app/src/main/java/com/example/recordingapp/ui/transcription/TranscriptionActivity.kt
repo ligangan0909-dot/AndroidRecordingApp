@@ -40,7 +40,6 @@ class TranscriptionActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize ViewModel
         val app = application as RecordingApp
         val factory = TranscriptionViewModelFactory(app.transcriptionService)
         viewModel = ViewModelProvider(this, factory)[TranscriptionViewModel::class.java]
@@ -48,7 +47,6 @@ class TranscriptionActivity : AppCompatActivity() {
         setupUI()
         observeState()
 
-        // Start transcription
         viewModel.startTranscription(recordingId!!, audioFilePath!!)
     }
 
@@ -114,7 +112,12 @@ class TranscriptionActivity : AppCompatActivity() {
                 showError(true)
                 
                 val userMessage = ErrorLogger.getUserMessage(state.error)
-                binding.tvErrorMessage.text = userMessage
+                val detailedMessage = buildDetailedErrorMessage(state.error)
+                
+                binding.tvErrorMessage.text = detailedMessage
+                
+                // 显示详细错误对话框
+                showDetailedErrorDialog(userMessage, detailedMessage)
             }
 
             is TranscriptionState.Cancelled -> {
@@ -122,6 +125,55 @@ class TranscriptionActivity : AppCompatActivity() {
                 finish()
             }
         }
+    }
+
+    private fun buildDetailedErrorMessage(error: com.example.recordingapp.data.model.TranscriptionError): String {
+        return when (error) {
+            is com.example.recordingapp.data.model.TranscriptionError.ApiError -> {
+                "API 错误\n" +
+                "错误码: ${error.code}\n" +
+                "详情: ${error.message}\n\n" +
+                "可能的原因:\n" +
+                when (error.code) {
+                    400 -> "• 请求参数错误\n• 检查 App ID 和 Cluster ID 是否正确"
+                    401 -> "• Access Key ID 或 Secret Key 错误\n• 密钥可能已过期"
+                    403 -> "• 没有访问权限\n• 检查账号是否开通语音服务"
+                    404 -> "• API 端点不存在\n• Cluster ID 可能错误"
+                    429 -> "• 请求过于频繁\n• 请稍后重试"
+                    500, 502, 503 -> "• 服务器错误\n• 请稍后重试"
+                    else -> "• 未知错误\n• 请检查所有配置"
+                }
+            }
+            is com.example.recordingapp.data.model.TranscriptionError.NetworkError -> {
+                "网络错误\n详情: ${error.message}\n\n可能的原因:\n• 网络连接不稳定\n• 防火墙阻止了请求"
+            }
+            is com.example.recordingapp.data.model.TranscriptionError.AuthenticationError -> {
+                "认证错误\n详情: ${error.message}\n\n请检查:\n• App ID\n• Access Key ID\n• Secret Key\n• Cluster ID"
+            }
+            is com.example.recordingapp.data.model.TranscriptionError.FileError -> {
+                "文件错误\n详情: ${error.message}"
+            }
+            else -> {
+                "错误: ${error.message}"
+            }
+        }
+    }
+
+    private fun showDetailedErrorDialog(userMessage: String, detailedMessage: String) {
+        AlertDialog.Builder(this)
+            .setTitle("转写失败")
+            .setMessage(detailedMessage)
+            .setPositiveButton("重试") { _, _ ->
+                viewModel.retryTranscription()
+            }
+            .setNegativeButton("返回", null)
+            .setNeutralButton("复制错误") { _, _ ->
+                val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                val clip = android.content.ClipData.newPlainText("错误信息", detailedMessage)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "错误信息已复制", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     private fun displayResult(state: TranscriptionState.Success) {
