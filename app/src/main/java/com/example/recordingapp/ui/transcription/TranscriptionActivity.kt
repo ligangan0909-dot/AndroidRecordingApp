@@ -14,15 +14,6 @@ import com.example.recordingapp.databinding.ActivityTranscriptionBinding
 import com.example.recordingapp.domain.ErrorLogger
 import kotlinx.coroutines.launch
 
-/**
- * Activity for displaying transcription progress and results
- * Features:
- * - Progress indicator with percentage for uploading
- * - Indeterminate progress for processing
- * - Cancel button with confirmation dialog
- * - Error display with retry button
- * - Success display with summary and full text
- */
 class TranscriptionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityTranscriptionBinding
@@ -40,7 +31,6 @@ class TranscriptionActivity : AppCompatActivity() {
         binding = ActivityTranscriptionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Get recording info from intent
         recordingId = intent.getStringExtra(EXTRA_RECORDING_ID)
         audioFilePath = intent.getStringExtra(EXTRA_AUDIO_FILE_PATH)
 
@@ -50,9 +40,10 @@ class TranscriptionActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize ViewModel with dependency injection
+        // Initialize ViewModel
         val app = application as RecordingApp
-        viewModel = app.transcriptionViewModel
+        val factory = TranscriptionViewModelFactory(app.transcriptionService)
+        viewModel = ViewModelProvider(this, factory)[TranscriptionViewModel::class.java]
 
         setupUI()
         observeState()
@@ -62,38 +53,23 @@ class TranscriptionActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        // Cancel button with confirmation
         binding.btnCancel.setOnClickListener {
             showCancelConfirmationDialog()
         }
 
-        // Retry button
         binding.btnRetry.setOnClickListener {
-            if (recordingId != null && audioFilePath != null) {
-                viewModel.retryTranscription(recordingId!!, audioFilePath!!)
-            }
+            viewModel.retryTranscription()
         }
 
-        // Close button
         binding.btnClose.setOnClickListener {
             finish()
         }
     }
 
     private fun observeState() {
-        // Observe transcription state
         lifecycleScope.launch {
             viewModel.transcriptionState.collect { state ->
                 updateUI(state)
-            }
-        }
-
-        // Observe user-friendly error messages
-        lifecycleScope.launch {
-            viewModel.userMessage.collect { message ->
-                if (message.isNotEmpty()) {
-                    // Message is already set in error state, no need to show toast
-                }
             }
         }
     }
@@ -137,7 +113,6 @@ class TranscriptionActivity : AppCompatActivity() {
                 showResult(false)
                 showError(true)
                 
-                // Use ErrorLogger to get user-friendly message
                 val userMessage = ErrorLogger.getUserMessage(state.error)
                 binding.tvErrorMessage.text = userMessage
             }
@@ -152,7 +127,6 @@ class TranscriptionActivity : AppCompatActivity() {
     private fun displayResult(state: TranscriptionState.Success) {
         val result = state.result
 
-        // Display summary
         if (result.summary?.isNotEmpty() == true) {
             binding.tvSummary.text = result.summary
             binding.layoutSummary.visibility = View.VISIBLE
@@ -160,17 +134,14 @@ class TranscriptionActivity : AppCompatActivity() {
             binding.layoutSummary.visibility = View.GONE
         }
 
-        // Display full text
         binding.tvFullText.text = result.fullText
 
-        // Show cache indicator if applicable
         if (result.isCached) {
             binding.tvCacheIndicator.visibility = View.VISIBLE
         } else {
             binding.tvCacheIndicator.visibility = View.GONE
         }
 
-        // Show close button
         binding.btnClose.visibility = View.VISIBLE
     }
 
@@ -179,7 +150,7 @@ class TranscriptionActivity : AppCompatActivity() {
             .setTitle("取消转写")
             .setMessage("确定要取消当前转写吗？")
             .setPositiveButton("确定") { _, _ ->
-                recordingId?.let { viewModel.cancelTranscription(it) }
+                viewModel.cancelTranscription()
                 finish()
             }
             .setNegativeButton("继续", null)
@@ -200,7 +171,6 @@ class TranscriptionActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        // If transcription is in progress, show confirmation dialog
         val currentState = viewModel.transcriptionState.value
         if (currentState is TranscriptionState.Uploading || currentState is TranscriptionState.Processing) {
             showCancelConfirmationDialog()
