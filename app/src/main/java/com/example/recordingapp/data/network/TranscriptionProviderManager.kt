@@ -19,12 +19,13 @@ class TranscriptionProviderManager(
         private const val PREFS_NAME = "transcription_provider_prefs"
         private const val KEY_SELECTED_PROVIDER = "selected_provider"
         
+        const val PROVIDER_ANDROID = "android"
         const val PROVIDER_OPENAI = "openai"
         const val PROVIDER_DOUBAO = "doubao"
     }
     
     fun getSelectedProviderType(): String {
-        return prefs.getString(KEY_SELECTED_PROVIDER, PROVIDER_DOUBAO) ?: PROVIDER_DOUBAO
+        return prefs.getString(KEY_SELECTED_PROVIDER, PROVIDER_ANDROID) ?: PROVIDER_ANDROID
     }
     
     fun setSelectedProviderType(providerType: String) {
@@ -40,11 +41,12 @@ class TranscriptionProviderManager(
         
         val providerType = getSelectedProviderType()
         currentProvider = when (providerType) {
+            PROVIDER_ANDROID -> createAndroidProvider()
             PROVIDER_OPENAI -> createOpenAIProvider()
             PROVIDER_DOUBAO -> createDoubaoProvider()
             else -> {
-                Log.w(TAG, "Unknown provider type: $providerType, falling back to Doubao")
-                createDoubaoProvider()
+                Log.w(TAG, "Unknown provider type: $providerType, falling back to Android")
+                createAndroidProvider()
             }
         }
         
@@ -54,6 +56,11 @@ class TranscriptionProviderManager(
     
     fun getAvailableProviders(): List<ProviderInfo> {
         return listOf(
+            ProviderInfo(
+                type = PROVIDER_ANDROID,
+                name = "Android 系统语音识别",
+                description = "使用设备自带的语音识别服务（免费）"
+            ),
             ProviderInfo(
                 type = PROVIDER_OPENAI,
                 name = "OpenAI Whisper",
@@ -69,6 +76,7 @@ class TranscriptionProviderManager(
     
     suspend fun validateProvider(providerType: String): Result<Boolean> {
         val provider = when (providerType) {
+            PROVIDER_ANDROID -> createAndroidProvider()
             PROVIDER_OPENAI -> createOpenAIProvider()
             PROVIDER_DOUBAO -> createDoubaoProvider()
             else -> return Result.failure(IllegalArgumentException("Unknown provider: $providerType"))
@@ -79,6 +87,10 @@ class TranscriptionProviderManager(
     
     fun getApiKeyManager(): SecureApiKeyManager {
         return apiKeyManager
+    }
+    
+    private fun createAndroidProvider(): ITranscriptionApiClient {
+        return AndroidSpeechApiClient(context)
     }
     
     private fun createOpenAIProvider(): ITranscriptionApiClient {
