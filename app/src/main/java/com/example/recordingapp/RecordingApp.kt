@@ -21,9 +21,9 @@ class RecordingApp : Application() {
         val networkManager = SecureNetworkManager()
         providerManager = TranscriptionProviderManager(this, networkManager)
         
-        // Force set provider to Doubao on app start
-        if (providerManager.getSelectedProviderType() != TranscriptionProviderManager.PROVIDER_DOUBAO) {
-            providerManager.setSelectedProviderType(TranscriptionProviderManager.PROVIDER_DOUBAO)
+        // Force set provider to Android Speech on app start (free, no API key needed)
+        if (providerManager.getSelectedProviderType() != TranscriptionProviderManager.PROVIDER_ANDROID) {
+            providerManager.setSelectedProviderType(TranscriptionProviderManager.PROVIDER_ANDROID)
         }
         
         val database = TranscriptionDatabase.getDatabase(this)
