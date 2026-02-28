@@ -5,6 +5,7 @@ import com.example.recordingapp.data.database.TranscriptionDatabase
 import com.example.recordingapp.data.network.SecureNetworkManager
 import com.example.recordingapp.data.network.TranscriptionProviderManager
 import com.example.recordingapp.data.repository.TranscriptionRepository
+import com.example.recordingapp.data.security.SecureApiKeyManager
 import com.example.recordingapp.domain.TranscriptionService
 
 class RecordingApp : Application() {
@@ -18,7 +19,8 @@ class RecordingApp : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        val networkManager = SecureNetworkManager()
+        val apiKeyManager = SecureApiKeyManager(this)
+        val networkManager = SecureNetworkManager(apiKeyManager)
         providerManager = TranscriptionProviderManager(this, networkManager)
         
         // Force set provider to Android Speech on app start (free, no API key needed)
