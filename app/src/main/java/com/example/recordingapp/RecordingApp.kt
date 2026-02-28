@@ -26,7 +26,7 @@ class RecordingApp : Application() {
             providerManager.setSelectedProviderType(TranscriptionProviderManager.PROVIDER_ANDROID)
         }
         
-        val database = TranscriptionDatabase.getDatabase(this)
+        val database = TranscriptionDatabase.getInstance(this)
         val repository = TranscriptionRepository(database.transcriptionDao())
         
         transcriptionService = TranscriptionService(providerManager, repository)
